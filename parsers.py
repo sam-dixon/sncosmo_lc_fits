@@ -160,6 +160,16 @@ def parse_ps():
         lc['zpsys'] = ['ab' for _ in lc]
         lc['zp'] = [27.5 for _ in lc]
         lc['band'] = [sncosmo.get_bandpass(band + 'p1') for band in lc['band']]
+        t0 = lc.meta['SEARCH_PEAKMJD']
+        z = lc.meta['REDSHIFT_FINAL']
+        time_cut = lc['MJD'] > t0 - 15. * (1 + z)
+        time_cut &= lc['MJD'] < t0 + 40. * (1 + z)
+        lc = lc[time_cut]
+        lc.meta = {'name': name,
+                   'survey': 'ps1',
+                   'z': z,
+                   'mwebv': lc.meta['MWEBV'],
+                   't0': t0}
         ps[name] = lc
     return ps
 
