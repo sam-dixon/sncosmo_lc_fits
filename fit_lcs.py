@@ -55,7 +55,7 @@ def fit_lc_and_save(lc, model_name, save_dir, no_mc):
                                                       guess_t0=False,
                                                       bounds=bounds,
                                                       warn=False,
-                                                      nwalkers=40,
+                                                      nwalkers=10,
                                                       modelcov=modelcov)
             pickle.dump(mc_result, open(save_path, 'wb'))
         else:
@@ -66,19 +66,22 @@ def fit_lc_and_save(lc, model_name, save_dir, no_mc):
 
 @click.command()
 @click.argument('dataset', type=click.Choice(DS_NAMES))
+@click.argument('start', default=0)
+@click.argument('end', default=-1)
 @click.option('--outdir', default='./fits')
 @click.option('--model', default='salt2')
 @click.option('--no_mc', is_flag=True)
-def main(dataset, outdir, model, no_mc):
+def main(dataset, start, end, outdir, model, no_mc):
     data_path = os.path.join(DATA_DIR, '{}_lcs.pkl'.format(dataset))
     save_dir = os.path.join(outdir, dataset)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     with open(data_path, 'rb') as f:
         data = pickle.load(f)
-    for sn_name, lc in data.items():
+    names = sorted(data.keys())
+    for sn_name in names[start:end]:
         logging.info('Fitting {}'.format(sn_name))
-        fit_lc_and_save(lc, model, save_dir, no_mc)
+        fit_lc_and_save(data[sn_name], model, save_dir, no_mc)
 
 
 if __name__ == '__main__':
