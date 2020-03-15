@@ -112,6 +112,12 @@ def parse_jla():
             survey = 'hst'
         if survey == 'SDSS':
             lc['Filter'] = [filt.name for filt in lc['Filter']]
+        lc['Filter'].name = 'band'
+        lc['Date'].name = 'time'
+        lc['Flux'].name = 'flux'
+        lc['Fluxerr'].name = 'fluxerr'
+        lc['ZP'].name = 'zp'
+        lc['MagSys'].name = 'zpsys'
         lc.meta = {'name': name,
                    'survey': survey,
                    'z': lc.meta['Z_HELIO'],
@@ -131,6 +137,7 @@ def parse_des():
         name = fname.split('_')[-1].split('.')[0]
         obs_list['OBS'].meta = meta
         lc = obs_list['OBS']
+        lc['MJD'].name = 'time'
         lc['BAND'].name = 'band'
         lc['FLUXCAL'].name = 'flux'
         lc['FLUXCALERR'].name = 'flux_err'
@@ -154,6 +161,7 @@ def parse_ps():
         name = fname.split('.')[0]
         obs_list['OBS'].meta = meta
         lc = obs_list['OBS']
+        lc['MJD'].name = 'time'
         lc['FLT'].name = 'band'
         lc['FLUXCAL'].name = 'flux'
         lc['FLUXCALERR'].name = 'flux_err'
@@ -162,8 +170,8 @@ def parse_ps():
         lc['band'] = [sncosmo.get_bandpass(band + 'p1') for band in lc['band']]
         t0 = lc.meta['SEARCH_PEAKMJD']
         z = lc.meta['REDSHIFT_FINAL']
-        time_cut = lc['MJD'] > t0 - 15. * (1 + z)
-        time_cut &= lc['MJD'] < t0 + 40. * (1 + z)
+        time_cut = lc['time'] > t0 - 15. * (1 + z)
+        time_cut &= lc['time'] < t0 + 40. * (1 + z)
         lc = lc[time_cut]
         lc.meta = {'name': name,
                    'survey': 'ps1',
