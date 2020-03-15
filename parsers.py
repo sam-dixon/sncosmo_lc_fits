@@ -110,6 +110,8 @@ def parse_jla():
             survey = lc.meta['SURVEY']
         except KeyError:
             survey = 'hst'
+        if survey == 'SDSS':
+            lc['Filter'] = [filt.name for filt in lc['Filter']]
         lc.meta = {'name': name,
                    'survey': survey,
                    'z': lc.meta['Z_HELIO'],
