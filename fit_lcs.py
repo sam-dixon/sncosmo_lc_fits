@@ -1,16 +1,16 @@
 import os
-import sys
 import click
 import pickle
 import sncosmo
 import logging
+import platform
 import numpy as np
 
 
 logger = logging.getLogger()
 logger = logger.setLevel('INFO')
 DS_NAMES = ['jla', 'csp', 'des', 'foundation', 'ps1']
-DATA_DIR = os.path.abspath('./data/')
+DATA_DIR = '/home/samdixon/sncosmo_lc_fits/data'
 
 
 def fit_lc_and_save(lc, model_name, save_dir, no_mc):
@@ -34,7 +34,7 @@ def fit_lc_and_save(lc, model_name, save_dir, no_mc):
     bounds['z'] = ((1 - 1e-4) * z, (1 + 1e-4) * z)
     for param_name in model.source.param_names[1:]:
         bounds[param_name] = (-50, 50)
-    modelcov = model_name=='salt2' # model covariance only supported for SALT2
+    modelcov = model_name=='salt2'  # model covariance only supported for SALT2
     model.set(z=z, t0=t0, mwebv=mwebv)
     phase_range = (-15, 45) if model_name=='salt2' else (-10, 40)
     wave_range = (3000, 7000) if model_name=='salt2' else None
