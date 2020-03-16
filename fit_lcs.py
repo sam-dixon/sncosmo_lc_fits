@@ -78,7 +78,7 @@ def main(dataset, start, end, outdir, model, no_mc):
         os.makedirs(save_dir)
     with open(data_path, 'rb') as f:
         data = pickle.load(f)
-    names = sorted(data.keys())
+    names = sorted([str(_) for _ in data.keys()])
     for sn_name in names[start:end]:
         logging.info('Fitting {}'.format(sn_name))
         fit_lc_and_save(data[sn_name], model, save_dir, no_mc)
