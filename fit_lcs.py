@@ -3,7 +3,6 @@ import click
 import pickle
 import sncosmo
 import logging
-import platform
 import numpy as np
 
 
