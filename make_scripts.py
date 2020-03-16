@@ -57,6 +57,8 @@ def make_scripts(dataset, njobs, no_mc):
 def main(dataset, njobs, no_mc):
     if dataset == 'all':
         for ds in DS_NAMES:
+            if ds == 'all':
+                continue
             make_scripts(ds, njobs, no_mc)
     else:
         make_scripts(dataset, njobs, no_mc)
