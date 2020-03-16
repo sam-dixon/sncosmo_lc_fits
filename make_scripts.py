@@ -25,7 +25,7 @@ TEMPLATE = """#!/bin/bash
 
 @click.command()
 @click.argument('dataset', type=click.Choice(DS_NAMES))
-@click.argument('njobs', )
+@click.argument('njobs', type=int)
 @click.option('--no_mc', is_flag=True)
 def main(dataset, njobs, no_mc):
     data_path = os.path.join(DATA_DIR, '{}_lcs.pkl'.format(dataset))
