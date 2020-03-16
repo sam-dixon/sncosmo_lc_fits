@@ -102,6 +102,8 @@ def parse_jla():
                              format='salt2', expand_bands=True,
                              read_covmat=True)
         name = lc.meta['SN']
+        if isinstance(name, float):
+            name = 'SDSS{}'.format(int(name))
         try:
             t0 = float(lc.meta['DayMax'].split()[0])
         except KeyError:
