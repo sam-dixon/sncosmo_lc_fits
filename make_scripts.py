@@ -51,6 +51,7 @@ def main(dataset, njobs, no_mc):
                 f.write(TEMPLATE.format(dataset=dataset,
                                         start=start,
                                         end=end,
+                                        curr_dir=CURR_DIR,
                                         no_mc='--no_mc' if no_mc else ''))
             os.chmod(script_path, 0o755)
             subf.write('qsub {}\n'.format(os.path.abspath(script_path)))
