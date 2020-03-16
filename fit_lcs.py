@@ -10,6 +10,7 @@ logger = logging.getLogger()
 logger = logger.setLevel('INFO')
 DS_NAMES = ['jla', 'csp', 'des', 'foundation', 'ps1']
 DATA_DIR = '/home/samdixon/sncosmo_lc_fits/data'
+OUT_DIR = '/home/samdixon/sncosmo_lc_fits/fits'
 
 
 def fit_lc_and_save(lc, model_name, save_dir, no_mc):
@@ -67,7 +68,7 @@ def fit_lc_and_save(lc, model_name, save_dir, no_mc):
 @click.argument('dataset', type=click.Choice(DS_NAMES))
 @click.argument('start', default=0)
 @click.argument('end', default=-1)
-@click.option('--outdir', default='./fits')
+@click.option('--outdir', default=OUT_DIR)
 @click.option('--model', default='salt2')
 @click.option('--no_mc', is_flag=True)
 def main(dataset, start, end, outdir, model, no_mc):
