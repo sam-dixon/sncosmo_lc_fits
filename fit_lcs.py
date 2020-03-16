@@ -10,7 +10,7 @@ import numpy as np
 logger = logging.getLogger()
 logger = logger.setLevel('INFO')
 DS_NAMES = ['jla', 'csp', 'des', 'foundation', 'ps1']
-DATA_DIR = './data/'
+DATA_DIR = os.path.abspath('./data/')
 
 
 def fit_lc_and_save(lc, model_name, save_dir, no_mc):

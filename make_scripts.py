@@ -13,6 +13,7 @@ if not os.path.isdir(SCRIPT_DIR):
 
 CURR_DIR = os.path.abspath('./')
 DATA_DIR = os.path.join(CURR_DIR, 'data')
+DS_NAMES = ['jla', 'csp', 'des', 'foundation', 'ps1']
 
 TEMPLATE = """#!/bin/bash
 #$ -N {dataset}_{start}_{end}
@@ -22,7 +23,11 @@ TEMPLATE = """#!/bin/bash
 /home/samdixon/anaconda3/bin/python {curr_dir}/fit_lcs.py {dataset} {start} {end} {no_mc}
 """
 
-def make_scripts(dataset, njobs, no_mc):
+@click.command()
+@click.argument('dataset', type=click.Choice(DS_NAMES))
+@click.argument('njobs', )
+@click.option('--no_mc', is_flag=True)
+def main(dataset, njobs, no_mc):
     data_path = os.path.join(DATA_DIR, '{}_lcs.pkl'.format(dataset))
     with open(data_path, 'rb') as f:
         data = pickle.load(f)
@@ -50,3 +55,7 @@ def make_scripts(dataset, njobs, no_mc):
             os.chmod(script_path, 0o755)
             subf.write('qsub {}\n'.format(os.path.abspath(script_path)))
     os.chmod(submit_script_path, 0o755)
+
+
+if __name__ == '__main__':
+    main()
