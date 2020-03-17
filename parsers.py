@@ -112,7 +112,9 @@ def parse_jla():
             survey = lc.meta['SURVEY']
         except KeyError:
             survey = 'hst'
-        lc['Filter'] = [filt.name for filt in lc['Filter']]
+        lc['Filter'] = [filt if filt.name.startswith('megacam')
+                        else filt.name
+                        for filt in lc['Filter']]
         lc['Filter'].name = 'band'
         lc['Date'].name = 'time'
         lc['Flux'].name = 'flux'
