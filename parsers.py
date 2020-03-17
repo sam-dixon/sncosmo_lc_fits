@@ -142,7 +142,7 @@ def parse_des():
         lc['BAND'].name = 'band'
         lc['FLUXCAL'].name = 'flux'
         lc['FLUXCALERR'].name = 'flux_err'
-        lc['ZPFLUX'].name = 'zp'
+        lc['zp'] = [27.5 for _ in lc]
         lc['zpsys'] = ['ab' for _ in lc]
         lc['band'] = ['des'+band_name for band_name in lc['band']]
         lc.meta = {'name': name,
