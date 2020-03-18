@@ -13,7 +13,7 @@ DATA_DIR = '/home/samdixon/sncosmo_lc_fits/data'
 OUT_DIR = '/home/samdixon/sncosmo_lc_fits/fits'
 
 
-def fit_lc_and_save(lc, model_name, save_dir, no_mc):
+def fit_lc_and_save(lc, model_name, save_path, no_mc):
     name = lc.meta['name']
     model = sncosmo.Model(source=model_name,
                           effects=[sncosmo.CCM89Dust()],
@@ -33,22 +33,22 @@ def fit_lc_and_save(lc, model_name, save_dir, no_mc):
         bounds['t0'] = (t0 - 5, t0 + 5)
     bounds['z'] = ((1 - 1e-4) * z, (1 + 1e-4) * z)
     for param_name in model.source.param_names[1:]:
-        bounds[param_name] = (-50, 50)
+        bounds[param_name] = (-10, 10)
+    bounds['x0'] = (0, 1)
     modelcov = model_name=='salt2'  # model covariance only supported for SALT2
     model.set(z=z, t0=t0, mwebv=mwebv)
     phase_range = (-15, 45) if model_name=='salt2' else (-10, 40)
     wave_range = (3000, 7000) if model_name=='salt2' else None
-    save_path = os.path.join(save_dir, '{}.pkl'.format(name))
-    try:
-        min_result, min_fit_model = sncosmo.fit_lc(lc, model,
-                                                   model.param_names[:-2],
-                                                   bounds=bounds,
-                                                   phase_range=phase_range,
-                                                   wave_range=wave_range,
-                                                   warn=False,
-                                                   modelcov=modelcov)
-        if not no_mc:
-            cut_lc = sncosmo.select_data(lc, min_result['data_mask'])
+    min_result, min_fit_model = sncosmo.fit_lc(lc, model,
+                                               model.param_names[:-2],
+                                               bounds=bounds,
+                                               phase_range=phase_range,
+                                               wave_range=wave_range,
+                                               warn=False,
+                                               modelcov=modelcov)
+    if not no_mc:
+        cut_lc = sncosmo.select_data(lc, min_result['data_mask'])
+        try:
             mc_result, mc_fit_model = sncosmo.mcmc_lc(cut_lc,
                                                       min_fit_model,
                                                       model.param_names[:-2],
@@ -58,10 +58,11 @@ def fit_lc_and_save(lc, model_name, save_dir, no_mc):
                                                       nwalkers=10,
                                                       modelcov=modelcov)
             pickle.dump(mc_result, open(save_path, 'wb'))
-        else:
+        except:
             pickle.dump(min_result, open(save_path, 'wb'))
-    except:
-        logging.warning('Fit to {} failed'.format(name))
+            logging.warning('MCMC fit to {} failed, using minuit result'.format(name))
+    else:
+        pickle.dump(min_result, open(save_path, 'wb'))
 
 
 @click.command()
@@ -80,8 +81,13 @@ def main(dataset, start, end, outdir, model, no_mc):
         data = pickle.load(f)
     names = sorted([str(_) for _ in data.keys()])
     for sn_name in names[start:end]:
-        logging.info('Fitting {}'.format(sn_name))
-        fit_lc_and_save(data[sn_name], model, save_dir, no_mc)
+        save_path = os.path.join(save_dir, '{}.pkl'.format(sn_name))
+        try:
+            pickle.load(open(save_path, 'rb'))
+            logging.info('{} loaded from file'.format(sn_name))
+        except FileNotFoundError:
+            logging.info('Fitting {}'.format(sn_name))
+            fit_lc_and_save(data[sn_name], model, save_path, no_mc)
 
 
 if __name__ == '__main__':
