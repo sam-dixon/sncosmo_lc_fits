@@ -42,8 +42,42 @@ CSP_FILT_MAP = {'u': 'cspu',
                 'Jdw': 'cspjd',
                 'Hdw': 'csphd'}
 CSP_MAGSYS = sncosmo.get_magsystem('csp')
-
 PS_FILTS = ascii.read(os.path.join(DATA_DIR, 'PSfilters.txt'))
+
+
+def radectoxyz(RAdeg, DECdeg):
+    x = np.cos(DECdeg/(180./np.pi))*np.cos(RAdeg/(180./np.pi))
+    y = np.cos(DECdeg/(180./np.pi))*np.sin(RAdeg/(180./np.pi))
+    z = np.sin(DECdeg/(180./np.pi))
+    return np.array([x, y, z], dtype=np.float64)
+
+
+def get_dz(RAdeg, DECdeg):
+    dzCMB = 371.e3/299792458.  # NED
+    # http://arxiv.org/pdf/astro-ph/9609034
+    # CMBcoordsRA = 167.98750000 # J2000 Lineweaver
+    # CMBcoordsDEC = -7.22000000
+    CMBcoordsRA = 168.01190437  # NED
+    CMBcoordsDEC = -6.98296811
+    CMBxyz = radectoxyz(CMBcoordsRA, CMBcoordsDEC)
+    inputxyz = radectoxyz(RAdeg, DECdeg)
+    dz = dzCMB*np.dot(CMBxyz, inputxyz)
+    return dz
+
+
+def get_zCMB(RAdeg, DECdeg, z_helio):
+    dz = -get_dz(RAdeg, DECdeg)
+    one_plus_z_pec = np.sqrt((1. + dz)/(1. - dz))
+    one_plus_z_CMB = (1 + z_helio)/one_plus_z_pec
+    return one_plus_z_CMB - 1.
+
+
+def get_zhelio(RAdeg, DECdeg, z_CMB):
+    dz = -get_dz(RAdeg, DECdeg)
+    one_plus_z_pec = np.sqrt((1. + dz)/(1. - dz))
+    one_plus_z_helio = (1 + z_CMB)*one_plus_z_pec
+    return one_plus_z_helio - 1.
+
 
 def read_and_register_ps_filts(name):
     name = name.lower()
@@ -70,10 +104,14 @@ def parse_csp():
             for l in f.readlines():
                 if l.split()[0][:2] == 'SN':
                     name, z, ra, dec = l.split()
+                    z = float(z.strip())
+                    ra = float(ra.strip())
+                    dec = float(dec.strip())
                     meta['name'] = name.strip()
                     meta['survey'] = 'csp'
-                    meta['z'] = float(z.strip())
-                    meta['mwebv'] = MWDUSTMAP.ebv(float(ra), float(dec))
+                    meta['z_helio'] = z
+                    meta['z_cmb'] = get_zCMB(ra, dec, z)
+                    meta['mwebv'] = MWDUSTMAP.ebv(ra, dec)
                     meta['t0'] = np.nan
                     continue
                 if l.split()[0] == 'filter':
@@ -121,9 +159,14 @@ def parse_jla():
         lc['Fluxerr'].name = 'fluxerr'
         lc['ZP'].name = 'zp'
         lc['MagSys'].name = 'zpsys'
+        try:
+            z_cmb = lc.meta['Z_CMB']
+        except KeyError:
+            z_cmb = get_zCMB(lc.meta['RA'], lc.meta['DEC'], lc.meta['Z_HELIO'])
         lc.meta = {'name': name,
                    'survey': survey,
-                   'z': lc.meta['Z_HELIO'],
+                   'z_helio': lc.meta['Z_HELIO'],
+                   'z_cmb': z_cmb,
                    'mwebv': lc.meta['MWEBV'],
                    't0': t0}
         jla[name] = lc
@@ -149,7 +192,9 @@ def parse_des():
         lc['band'] = ['des'+band_name for band_name in lc['band']]
         lc.meta = {'name': name,
                    'survey': 'des',
-                   'z': lc.meta['REDSHIFT_FINAL'],
+                   'z_helio': lc.meta['REDSHIFT_HELIO'],
+                   'z_cmb': get_zCMB(lc.meta['RA'], lc.meta['DECL'],
+                                     lc.meta['REDSHIFT_HELIO']),
                    'mwebv': lc.meta['MWEBV'],
                    't0': lc.meta['PEAKMJD']}
         des[name] = lc
@@ -178,7 +223,8 @@ def parse_ps():
         lc = lc[time_cut]
         lc.meta = {'name': name,
                    'survey': 'ps1',
-                   'z': z,
+                   'z_helio': z,
+                   'z_cmb': get_zCMB(lc.meta['RA'], lc.meta['DECL'], z),
                    'mwebv': lc.meta['MWEBV'],
                    't0': t0}
         ps[name] = lc
@@ -203,7 +249,8 @@ def parse_foundation():
             continue
         meta_out = {'name': sn_name,
                     'survey': 'foundation',
-                    'z': float(sn_meta['z_helio'].split()[0]),
+                    'z_helio': float(sn_meta['z_helio'].split()[0]),
+                    'z_cmb': float(sn_meta['z_CMB'].split()[0]),
                     't0': float(sn_meta['Peak_MJD'].split()[0]),
                     'mwebv': np.nan}
         bands = [sncosmo.get_bandpass(band.lower())
